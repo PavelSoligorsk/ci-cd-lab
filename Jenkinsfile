@@ -1,41 +1,36 @@
 pipeline {
     agent any
 
-    options {
-        timestamps()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+    tools {
+        maven 'M3'
+        jdk 'JDK17'
     }
 
-    environment {
-        APP_NAME = 'java-maven-ci-demo'
-        VERSION = '1.0.0'
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+        timestamps()
     }
 
     triggers {
-        pollSCM('H/5 * * * *')
+        pollSCM('H/2 * * * *')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'file:///E:/repos/java-maven-ci-demo.git']]
-                ])
-                echo "Project: ${env.APP_NAME} v${env.VERSION}"
+                git url: 'D:/repos/java-maven-ci-demo.git', branch: 'main'
             }
         }
 
         stage('Build') {
             steps {
-                echo "Compiling Java sources..."
                 bat 'mvn -B clean compile'
             }
         }
 
         stage('Test') {
             steps {
-                echo "Running unit tests..."
                 bat 'mvn -B test jacoco:report'
             }
             post {
@@ -52,30 +47,15 @@ pipeline {
 
         stage('Package') {
             steps {
-                echo "Packaging application..."
                 bat 'mvn -B package -DskipTests'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                }
-            }
-        }
-
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo "Deploying application locally..."
-                bat 'java -jar target/java-maven-ci-demo-1.0.0.jar'
+                archiveArtifacts 'target/*.jar'
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline execution completed"
+            echo "Pipeline completed for ${env.JOB_NAME} #${env.BUILD_NUMBER}"
         }
         success {
             echo "✅ Build successful!"
