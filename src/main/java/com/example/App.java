@@ -10,7 +10,7 @@ public class App {
      * Точка входа приложения
      */
     public static void main(String[] args) {
-        System.out.println("==================================");
+        System.out.println("==========================0========");
         System.out.println("Java Maven CI/CD Demo Application");
         System.out.println("Built with Maven Archetype");
         System.out.println("==================================");
