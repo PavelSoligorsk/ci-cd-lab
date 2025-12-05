@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9'   // ← Имя из настроек Tools в Jenkins
-        jdk 'JDK-21'        // ← Имя из настроек Tools в Jenkins
+        maven 'Maven-3.9'   // Проверьте точное имя в Jenkins
+        jdk 'JDK-21'        // Проверьте точное имя в Jenkins
     }
 
     options {
@@ -17,29 +17,37 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout from GitHub') {
             steps {
-                git url: 'D:/repos/java-maven-ci-demo.git', branch: 'main'
+                // ИЗМЕНИТЬ: ваш репозиторий на GitHub
+                git url: 'https://github.com/PavelSoligorsk/ci-cd-lab.git', branch: 'main'
+                echo '✅ Код загружен с GitHub'
             }
         }
 
         stage('Build') {
             steps {
+                bat 'mvn --version'
                 bat 'mvn -B clean compile'
+                echo '✅ Сборка завершена'
             }
         }
 
         stage('Test') {
             steps {
-                bat 'mvn -B test jacoco:report'
+                bat 'mvn -B test'
+                echo '✅ Тесты выполнены'
             }
             post {
                 always {
                     junit '**/target/surefire-reports/*.xml'
+
+                    // ОСТОРОЖНО: плагин publishHTML нужно установить
                     publishHTML([
                         reportDir: 'target/site/jacoco',
                         reportFiles: 'index.html',
-                        reportName: 'JaCoCo Code Coverage'
+                        reportName: 'JaCoCo Code Coverage',
+                        keepAll: true
                     ])
                 }
             }
@@ -48,20 +56,37 @@ pipeline {
         stage('Package') {
             steps {
                 bat 'mvn -B package -DskipTests'
-                archiveArtifacts 'target/*.jar'
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                echo '✅ JAR-файл создан'
+            }
+        }
+
+        stage('Deploy Simulation') {
+            steps {
+                echo '🚀 Симуляция деплоя...'
+                // Запускаем приложение для демонстрации
+                bat 'java -jar target/ci-cd-lab-*.jar'
+                echo '🎉 CI/CD цикл завершен успешно!'
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline completed for ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            echo "======================================="
+            echo "Pipeline: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            echo "Результат: ${currentBuild.result}"
+            echo "======================================="
         }
         success {
-            echo "✅ Build successful!"
+            echo "✅ СБОРКА УСПЕШНА!"
+            // Можно добавить уведомление на почту
         }
         failure {
-            echo "❌ Build failed!"
+            echo "❌ СБОРКА ПРОВАЛЕНА!"
+        }
+        unstable {
+            echo "⚠️ СБОРКА НЕСТАБИЛЬНА (тесты упали)"
         }
     }
 }
