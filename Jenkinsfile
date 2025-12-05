@@ -3,6 +3,7 @@ pipeline {
 
     tools {
         maven 'Bundled (Maven 3)'
+        jdk 'JDK-21'
     }
 
     options {
