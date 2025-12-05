@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9'   // Проверьте точное имя в Jenkins
+        maven 'Bundled (Maven 3)'   // Проверьте точное имя в Jenkins
         jdk 'JDK-21'        // Проверьте точное имя в Jenkins
     }
 
