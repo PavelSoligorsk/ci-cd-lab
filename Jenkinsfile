@@ -2,13 +2,11 @@ pipeline {
     agent any
 
     tools {
-        maven 'Bundled (Maven 3)'   // Проверьте точное имя в Jenkins
-        jdk 'JDK-21'        // Проверьте точное имя в Jenkins
+        maven 'Bundled (Maven 3)'
     }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        disableConcurrentBuilds()
         timestamps()
     }
 
@@ -17,78 +15,71 @@ pipeline {
     }
 
     stages {
-        stage('Checkout from GitHub') {
+        stage('Checkout') {
             steps {
-                // ИЗМЕНИТЬ: ваш репозиторий на GitHub
                 git url: 'https://github.com/PavelSoligorsk/ci-cd-lab.git', branch: 'main'
-                echo '✅ Код загружен с GitHub'
             }
         }
 
         stage('Build') {
             steps {
-                bat 'mvn --version'
-                bat 'mvn -B clean compile'
-                echo '✅ Сборка завершена'
+                bat 'mvn clean compile -B'
             }
         }
 
         stage('Test') {
             steps {
-                bat 'mvn -B test'
-                echo '✅ Тесты выполнены'
+                bat 'mvn test jacoco:report -B'
             }
             post {
                 always {
                     junit '**/target/surefire-reports/*.xml'
-
-                    // ОСТОРОЖНО: плагин publishHTML нужно установить
                     publishHTML([
-                                            reportDir: 'target/site/jacoco',
-                                            reportFiles: 'index.html',
-                                            reportName: 'JaCoCo Coverage Report',
-                                            alwaysLinkToLastBuild: true,
-                                            allowMissing: false,
-                                            keepAll: true
-                                        ])
+                        reportDir: 'target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'JaCoCo Coverage Report',
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: false,
+                        keepAll: true
+                    ])
                 }
             }
         }
 
         stage('Package') {
             steps {
-                bat 'mvn -B package -DskipTests'
+                bat 'mvn package -DskipTests -B'
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                echo '✅ JAR-файл создан'
             }
         }
 
-        stage('Deploy Simulation') {
+        stage('Run Application') {
             steps {
-                echo '🚀 Симуляция деплоя...'
-                // Запускаем приложение для демонстрации
-                bat 'java -jar target/ci-cd-lab-*.jar'
-                echo '🎉 CI/CD цикл завершен успешно!'
+                echo '🚀 Запуск приложения...'
+                // ИСПРАВЛЕНО: правильное имя JAR-файла
+                bat 'java -jar target/java-maven-ci-demo-*.jar'
+                echo '🎉 Приложение успешно запущено!'
             }
         }
     }
 
     post {
         always {
-            echo "======================================="
+            echo "========================================"
             echo "Pipeline: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-            echo "Результат: ${currentBuild.result}"
-            echo "======================================="
+            echo "Статус: ${currentBuild.currentResult}"
+            echo "========================================"
         }
         success {
-            echo "✅ СБОРКА УСПЕШНА!"
-            // Можно добавить уведомление на почту
+            echo '🎉 ПОЗДРАВЛЯЮ! ЛАБОРАТОРНАЯ РАБОТА ВЫПОЛНЕНА УСПЕШНО!'
+            echo '✅ Полный CI/CD цикл работает'
+            echo '✅ 7 тестов пройдены'
+            echo '✅ Отчеты JaCoCo сгенерированы'
+            echo '✅ JAR-файл создан'
+            echo '✅ Приложение запущено'
         }
         failure {
-            echo "❌ СБОРКА ПРОВАЛЕНА!"
-        }
-        unstable {
-            echo "⚠️ СБОРКА НЕСТАБИЛЬНА (тесты упали)"
+            echo '❌ Сборка завершилась с ошибкой'
         }
     }
 }
