@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/PavelSoligorsk/ci-cd-lab.git'
+                git 'https://github.com/PavelSoligorsk/ci-cd-lab.git',
                 branch: 'main'
             }
         }
