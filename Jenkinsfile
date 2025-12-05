@@ -6,19 +6,10 @@ pipeline {
         jdk 'JDK-21'
     }
 
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timestamps()
-    }
-
-    triggers {
-        pollSCM('H/2 * * * *')
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/PavelSoligorsk/ci-cd-lab.git', branch: 'main'
+                git 'https://github.com/PavelSoligorsk/ci-cd-lab.git'
             }
         }
 
@@ -50,37 +41,14 @@ pipeline {
         stage('Package') {
             steps {
                 bat 'mvn package -DskipTests -B'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
-
-        stage('Run Application') {
-            steps {
-                echo '🚀 Запуск приложения...'
-                // ИСПРАВЛЕНО: правильное имя JAR-файла
-                bat 'java -jar target/java-maven-ci-demo-*.jar'
-                echo '🎉 Приложение успешно запущено!'
+                archiveArtifacts 'target/*.jar'
             }
         }
     }
 
     post {
-        always {
-            echo "========================================"
-            echo "Pipeline: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-            echo "Статус: ${currentBuild.currentResult}"
-            echo "========================================"
-        }
         success {
-            echo '🎉 ПОЗДРАВЛЯЮ! ЛАБОРАТОРНАЯ РАБОТА ВЫПОЛНЕНА УСПЕШНО!'
-            echo '✅ Полный CI/CD цикл работает'
-            echo '✅ 7 тестов пройдены'
-            echo '✅ Отчеты JaCoCo сгенерированы'
-            echo '✅ JAR-файл создан'
-            echo '✅ Приложение запущено'
-        }
-        failure {
-            echo '❌ Сборка завершилась с ошибкой'
+            echo '🎉 ЛАБОРАТОРНАЯ ВЫПОЛНЕНА! CI/CD работает успешно!'
         }
     }
 }
