@@ -44,11 +44,13 @@ pipeline {
 
                     // ОСТОРОЖНО: плагин publishHTML нужно установить
                     publishHTML([
-                        reportDir: 'target/site/jacoco',
-                        reportFiles: 'index.html',
-                        reportName: 'JaCoCo Code Coverage',
-                        keepAll: true
-                    ])
+                                            reportDir: 'target/site/jacoco',
+                                            reportFiles: 'index.html',
+                                            reportName: 'JaCoCo Coverage Report',
+                                            alwaysLinkToLastBuild: true,
+                                            allowMissing: false,
+                                            keepAll: true
+                                        ])
                 }
             }
         }
